@@ -5,6 +5,8 @@ var path = require('path');
 var logger = require('morgan');
 const session = require('express-session');
 const FileStore = require('session-file-store')(session);
+const passport = require('passport');
+const authenticate = require('./authenticate');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -48,6 +50,10 @@ app.use(session({
   store: new FileStore  //This will create a file to store session on our server haed disk
 }));
 
+//Initialize passport 
+app.use(passport.initialize());
+app.use(passport.session());
+
 //Routes which do not need Authentication must be put before auth function !!!
 //Here user must be able to access'/users' so that he/she can create an account/register !! 
 app.use('/', indexRouter);
@@ -56,26 +62,20 @@ app.use('/users', usersRouter);
 
 //Authentication: Come after middlewares
 function auth(req, res, next) {
-  console.log(req.session)
+  console.log(req.user)
   //Using session
   //If there is no session 
-    if(!req.session.user) {
+    if(!req.user) {
         const err = new Error('You are not authenticated!');
         err.status = 401;
         return next(err);
   } else {
     //If there is a session :
-    if(req.session.user === 'authenticated') {
       return next();
-    } else {
-      //If there is an err 
-      const err = new Error('You are not authenticated!');
-      err.status = 401;
-      return next(err);
-    }
-  }
-
+    } 
 }
+
+
   
 app.use(auth)
 app.use(express.static(path.join(__dirname, 'public')));
