@@ -35,33 +35,49 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser('12345-67890-0985-5362'));
 
 //Authentication: Come after middlewares
 function auth(req, res, next) {
-  console.log(req.headers);
-  const authHeader = req.headers.authorization;
-  if(!authHeader) {
-    const err = new Error('You are not authenticated!');
-    res.setHeader(`WWW-Authenticate`, 'Basic');
-    err.status = 401;
-    return next(err);
-  }
-  //Get the user and password
-  const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-  const user = auth[0];
-  const pass = auth[1];
-  //Validation: Check user and password
-  if(user === 'admin' && pass === 'password') {
-    return next(); //Authorized
+  //Using Cookies
+  //If there is no signed cookies 
+    if(!req.signedCookies.user) {
+      const authHeader = req.headers.authorization;
+        if(!authHeader) {
+        const err = new Error('You are not authenticated!');
+        res.setHeader(`WWW-Authenticate`, 'Basic');
+        err.status = 401;
+        return next(err);
+      }
+    //Get the user and password
+    const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+    const user = auth[0];
+    const pass = auth[1];
+    //Validation: Check user and password and set cookie 
+      if(user === 'admin' && pass === 'password') {
+        //Set the cookie
+        res.cookie('user', 'admin', {signed: true});
+        return next(); //Authorized
+      } else {
+        const err = new Error('You are not authenticated!');
+        res.setHeader(`WWW-Authenticate`, 'Basic');
+        err.status = 401;
+        return next(err);
+      }
   } else {
-    const err = new Error('You are not authenticated!');
-    res.setHeader(`WWW-Authenticate`, 'Basic');
-    err.status = 401;
-    return next(err);
+    //If there is a signed cookie :
+    if(req.signedCookies.user === 'admin') {
+      return next();
+    } else {
+      //If there is an err 
+      const err = new Error('You are not authenticated!');
+      err.status = 401;
+      return next(err);
+    }
   }
-}
 
+}
+  
 app.use(auth)
 app.use(express.static(path.join(__dirname, 'public')));
 
