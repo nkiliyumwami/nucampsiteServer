@@ -48,37 +48,24 @@ app.use(session({
   store: new FileStore  //This will create a file to store session on our server haed disk
 }));
 
+//Routes which do not need Authentication must be put before auth function !!!
+//Here user must be able to access'/users' so that he/she can create an account/register !! 
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+
+
 //Authentication: Come after middlewares
 function auth(req, res, next) {
   console.log(req.session)
   //Using session
   //If there is no session 
     if(!req.session.user) {
-      const authHeader = req.headers.authorization;
-        if(!authHeader) {
         const err = new Error('You are not authenticated!');
-        res.setHeader(`WWW-Authenticate`, 'Basic');
         err.status = 401;
         return next(err);
-      }
-    //Get the user and password
-    const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-    const user = auth[0];
-    const pass = auth[1];
-    //Validation: Check user and password and set the session 
-      if(user === 'admin' && pass === 'password') {
-        //Set the session
-        req.session.user = 'admin';
-        return next(); //Authorized
-      } else {
-        const err = new Error('You are not authenticated!');
-        res.setHeader(`WWW-Authenticate`, 'Basic');
-        err.status = 401;
-        return next(err);
-      }
   } else {
     //If there is a session :
-    if(req.session.user === 'admin') {
+    if(req.session.user === 'authenticated') {
       return next();
     } else {
       //If there is an err 
@@ -93,8 +80,7 @@ function auth(req, res, next) {
 app.use(auth)
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+
 app.use('/campsites', campsiteRouter);
 app.use('/promotions', promotionRouter);
 app.use('/partners', partnerRouter);
