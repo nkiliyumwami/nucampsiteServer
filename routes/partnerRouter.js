@@ -3,6 +3,7 @@ const partnerRouter = express.Router();
 
 //Import the model
 const Partner = require('../models/partner');
+const authenticate = require('../authenticate');
 
 //Routing
 partnerRouter.route('/')
@@ -16,7 +17,7 @@ partnerRouter.route('/')
     })
     .catch(err => next(err));
 })
-.post((req, res, next) => {
+.post(authenticate.verifyUser,(req, res, next) => {
     //Create a new partner from the request body
     Partner.create(req.body)
     .then(partner => {
@@ -27,12 +28,12 @@ partnerRouter.route('/')
     })
     .catch(err => next(err));
 })
-.put((req, res) => {
+.put(authenticate.verifyUser,(req, res) => {
     //PUT OPERATION NOT SUPPORTED IN THIS CASE
     res.statusCode = 403;
     res.end(`PUT operation not supported on /partners`);
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser,(req, res, next) => {
     //Delete all the partners
     Partner.deleteMany()
     .then(response => {
@@ -55,12 +56,12 @@ partnerRouter.route('/:partnerId')
     })
     .catch(err => next(err));
 })
-.post((req, res) => {
+.post(authenticate.verifyUser,(req, res) => {
     //POST NOT SUPPORTED IN THIS CASE 
     res.statusCode = 403;
     res.end(`POST operation not supported on /partners/${req.params.partnerId}`);
 })
-.put((req, res, next) => {
+.put(authenticate.verifyUser,(req, res, next) => {
     //Update a partner content : "new: true"=> this to be able to show the update partner
     Partner.findByIdAndUpdate(req.params.partnerId, {
         $set: req.body
@@ -73,7 +74,7 @@ partnerRouter.route('/:partnerId')
     .catch(err => next(err))
 
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser,(req, res, next) => {
     //Delete a specific partner : by Id
     Partner.findByIdAndDelete(req.params.partnerId)
     .then(response => {
