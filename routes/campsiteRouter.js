@@ -11,6 +11,7 @@ campsiteRouter.route('/')
 .get((req, res, next)=> {
     //Get all campsites
     Campsite.find()
+    .populate('comments.author')
     .then(campsites => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -50,6 +51,7 @@ campsiteRouter.route('/:campsiteId')
 .get((req, res, next) => {
     //Get a particular campsite(here by id)
     Campsite.findById(req.params.campsiteId)
+    .populate('comments.author')
     .then(campsite => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -89,6 +91,7 @@ campsiteRouter.route('/:campsiteId/comments')
 .get((req, res, next) => {
     //Get a single campsite and return all comments for this campsite
     Campsite.findById(req.params.campsiteId)
+    .populate('comments.author')
     .then(campsite => {
       //Check if campsite exist
       if(campsite) {
@@ -109,6 +112,8 @@ campsiteRouter.route('/:campsiteId/comments')
     Campsite.findById(req.params.campsiteId)
     .then(campsite => {
         if(campsite) {
+            //Add an id of user who post/submited  a comment in the author field 
+            req.body.author = req.user._id;
             //Push a new comment into comments array
             campsite.comments.push(req.body);
             //Save the comment into database
@@ -160,6 +165,7 @@ campsiteRouter.route('/:campsiteId/comments')
 campsiteRouter.route('/:campsiteId/comments/:commentId')
 .get((req, res, next) => {
     Campsite.findById(req.params.campsiteId)
+    .populate('comments.author')
     .then(campsite => {
         //Check if campsite and comment are not null/exist 
         if(campsite && campsite.comments.id(req.params.commentId)) {
