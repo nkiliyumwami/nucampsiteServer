@@ -7,9 +7,17 @@ const authenticate = require('../authenticate');
 const User = require('../models/user');
 
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
-});
+router.get('/', authenticate.verifyUser,  authenticate.verifyAdmin, (req, res, next) => {
+  // res.send('respond with a resource');
+  User.find()
+  .then(users => {
+    res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(users);
+    })
+    .catch(err => next(err));
+  });
+
 
 //Create a user: SignUp 
 router.post('/signup', (req, res) => {
@@ -56,6 +64,7 @@ router.post('/login', passport.authenticate('local'), (req, res) => {
   const token = authenticate.getToken({_id: req.user._id});
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');
+  //Once we have a token; include it in our response
   res.json({success: true, token: token, status: 'You are successfully logged in!'})
 });
 

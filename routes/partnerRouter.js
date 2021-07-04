@@ -17,7 +17,7 @@ partnerRouter.route('/')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser,(req, res, next) => {
+.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     //Create a new partner from the request body
     Partner.create(req.body)
     .then(partner => {
@@ -33,7 +33,7 @@ partnerRouter.route('/')
     res.statusCode = 403;
     res.end(`PUT operation not supported on /partners`);
 })
-.delete(authenticate.verifyUser,(req, res, next) => {
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     //Delete all the partners
     Partner.deleteMany()
     .then(response => {
@@ -61,7 +61,7 @@ partnerRouter.route('/:partnerId')
     res.statusCode = 403;
     res.end(`POST operation not supported on /partners/${req.params.partnerId}`);
 })
-.put(authenticate.verifyUser,(req, res, next) => {
+.put(authenticate.verifyUser, authenticate.verifyAdmin,(req, res, next) => {
     //Update a partner content : "new: true"=> this to be able to show the update partner
     Partner.findByIdAndUpdate(req.params.partnerId, {
         $set: req.body
@@ -74,7 +74,7 @@ partnerRouter.route('/:partnerId')
     .catch(err => next(err))
 
 })
-.delete(authenticate.verifyUser,(req, res, next) => {
+.delete(authenticate.verifyUser, authenticate.verifyAdmin,(req, res, next) => {
     //Delete a specific partner : by Id
     Partner.findByIdAndDelete(req.params.partnerId)
     .then(response => {
