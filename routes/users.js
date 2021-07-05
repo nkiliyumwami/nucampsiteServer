@@ -2,12 +2,14 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const authenticate = require('../authenticate');
+const cors = require('./cors');
+
 
 //Import the model 
 const User = require('../models/user');
 
 /* GET users listing. */
-router.get('/', authenticate.verifyUser,  authenticate.verifyAdmin, (req, res, next) => {
+router.get('/', cors.corsWithOptions, authenticate.verifyUser,  authenticate.verifyAdmin, (req, res, next) => {
   // res.send('respond with a resource');
   User.find()
   .then(users => {
@@ -20,7 +22,7 @@ router.get('/', authenticate.verifyUser,  authenticate.verifyAdmin, (req, res, n
 
 
 //Create a user: SignUp 
-router.post('/signup', (req, res) => {
+router.post('/signup', cors.corsWithOptions, (req, res) => {
     User.register(
         new User({username: req.body.username}),
         req.body.password,
@@ -59,7 +61,7 @@ router.post('/signup', (req, res) => {
 
 
 //Sign/ login in 
-router.post('/login', passport.authenticate('local'), (req, res) => {
+router.post('/login', cors.corsWithOptions, passport.authenticate('local'), (req, res) => {
   //Once a user is authenticated; then get a token: 
   const token = authenticate.getToken({_id: req.user._id});
   res.statusCode = 200;
@@ -70,7 +72,7 @@ router.post('/login', passport.authenticate('local'), (req, res) => {
 
 
 //Log out a user: Here we use 'get' as a user is not sending anything to the server ! 
-router.get('/logout', (req, res, next) => {
+router.get('/logout', cors.corsWithOptions, (req, res, next) => {
   //To log out we check if you loged in by seeing the session and if there we destroy it 
   if(req.session) {
     req.session.destroy(); //Destroying the session 

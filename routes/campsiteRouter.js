@@ -2,13 +2,15 @@ const express = require('express');
 //Import the Campsite Model
 const Campsite = require('../models/campsite');
 const authenticate = require('../authenticate');
+const cors = require('./cors'); //cors module we created 
 
 //Create express Router
 const campsiteRouter = express.Router();
 
 //Start the routing and add RestApi support endpoints routing method using MongoDB  
 campsiteRouter.route('/')
-.get((req, res, next)=> {
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200)) //Pre-flight requests
+.get(cors.cors,(req, res, next)=> {
     //Get all campsites
     Campsite.find()
     .populate('comments.author')
@@ -19,7 +21,7 @@ campsiteRouter.route('/')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     //Create a new campsite from the request body: the (next) fx is for error handling
     Campsite.create(req.body)
     .then(campsite => {
@@ -30,11 +32,11 @@ campsiteRouter.route('/')
     })
     .catch(err => next(err));
 })
-.put(authenticate.verifyUser,(req, res) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`PUT operation not supported on /campsites`);
 })
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     //Delete all campsites
     Campsite.deleteMany()
     .then(response => {
@@ -48,7 +50,8 @@ campsiteRouter.route('/')
 
 //Adding RestAPI endpoints with parameters
 campsiteRouter.route('/:campsiteId')
-.get((req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+.get(cors.cors, (req, res, next) => {
     //Get a particular campsite(here by id)
     Campsite.findById(req.params.campsiteId)
     .populate('comments.author')
@@ -59,11 +62,11 @@ campsiteRouter.route('/:campsiteId')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser,(req, res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /campsites/${req.params.campsiteId}`);
 })
-.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next)=> {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next)=> {
     //Update a particular campsite by Id
     Campsite.findByIdAndUpdate(req.params.campsiteId, {
         $set: req.body
@@ -75,7 +78,7 @@ campsiteRouter.route('/:campsiteId')
     })
     .catch(err => next(err))
 })
-.delete(authenticate.verifyUser, authenticate.verifyAdmin,(req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,(req, res, next) => {
     //Delete a particular campsite by Id
     Campsite.findByIdAndDelete(req.params.campsiteId)
     .then(response => {
@@ -88,7 +91,8 @@ campsiteRouter.route('/:campsiteId')
 
 //Adding RestAPI endpoints with parameters to access a subdocument(comment)
 campsiteRouter.route('/:campsiteId/comments')
-.get((req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+.get(cors.cors, (req, res, next) => {
     //Get a single campsite and return all comments for this campsite
     Campsite.findById(req.params.campsiteId)
     .populate('comments.author')
@@ -107,7 +111,7 @@ campsiteRouter.route('/:campsiteId/comments')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser,(req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser,(req, res, next) => {
     //Add a new comment to a particular campsite
     Campsite.findById(req.params.campsiteId)
     .then(campsite => {
@@ -132,11 +136,11 @@ campsiteRouter.route('/:campsiteId/comments')
     })
     .catch(err => next(err));
 })
-.put(authenticate.verifyUser,(req, res) => {
+.put(cors.corsWithOptions, authenticate.verifyUser,(req, res) => {
     res.statusCode = 403;
     res.end(`PUT operation not supported on /campsites/${req.params.campsiteId}/comments`);
 })
-.delete(authenticate.verifyUser, authenticate.verifyAdmin,(req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,(req, res, next) => {
     Campsite.findById(req.params.campsiteId)
     .then(campsite => {
         if(campsite) {
@@ -163,7 +167,8 @@ campsiteRouter.route('/:campsiteId/comments')
 
 //Endpoints for requests for a specific comment for a specific campsite
 campsiteRouter.route('/:campsiteId/comments/:commentId')
-.get((req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+.get(cors.cors, (req, res, next) => {
     Campsite.findById(req.params.campsiteId)
     .populate('comments.author')
     .then(campsite => {
@@ -185,11 +190,11 @@ campsiteRouter.route('/:campsiteId/comments/:commentId')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser,(req, res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /campsites/${req.params.campsiteId}/comments/${req.params.commentId}`);
 })
-.put(authenticate.verifyUser,(req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser,(req, res, next) => {
    Campsite.findById(req.params.campsiteId)
    .then(campsite => {
        if(campsite && campsite.comments.id(req.params.commentId)) {
@@ -227,7 +232,7 @@ campsiteRouter.route('/:campsiteId/comments/:commentId')
    })
    .catch(err => next(err)) 
 })
-.delete(authenticate.verifyUser,(req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser,(req, res, next) => {
     Campsite.findById(req.params.campsiteId)
     .then(campsite => {
         if(campsite && campsite.comments.id(req.params.commentId)) {

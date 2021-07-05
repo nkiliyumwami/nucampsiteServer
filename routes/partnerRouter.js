@@ -4,10 +4,12 @@ const partnerRouter = express.Router();
 //Import the model
 const Partner = require('../models/partner');
 const authenticate = require('../authenticate');
+const cors = require('./cors');
 
 //Routing
 partnerRouter.route('/')
-.get((req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200)) //Pre-flight requests
+.get(cors.cors,(req, res, next)=> {
     //Get all partners
     Partner.find()
     .then(partners => {
@@ -17,7 +19,7 @@ partnerRouter.route('/')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     //Create a new partner from the request body
     Partner.create(req.body)
     .then(partner => {
@@ -28,12 +30,12 @@ partnerRouter.route('/')
     })
     .catch(err => next(err));
 })
-.put(authenticate.verifyUser,(req, res) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     //PUT OPERATION NOT SUPPORTED IN THIS CASE
     res.statusCode = 403;
     res.end(`PUT operation not supported on /partners`);
 })
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     //Delete all the partners
     Partner.deleteMany()
     .then(response => {
@@ -46,7 +48,8 @@ partnerRouter.route('/')
 
 //REST API Endpoints with parameters
 partnerRouter.route('/:partnerId')
-.get((req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200)) //Pre-flight requests
+.get(cors.cors,(req, res, next)=> {
     //Get a partner by Id from request body
     Partner.findById(req.params.partnerId)
     .then(partner => {
@@ -56,12 +59,12 @@ partnerRouter.route('/:partnerId')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser,(req, res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     //POST NOT SUPPORTED IN THIS CASE 
     res.statusCode = 403;
     res.end(`POST operation not supported on /partners/${req.params.partnerId}`);
 })
-.put(authenticate.verifyUser, authenticate.verifyAdmin,(req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,(req, res, next) => {
     //Update a partner content : "new: true"=> this to be able to show the update partner
     Partner.findByIdAndUpdate(req.params.partnerId, {
         $set: req.body
@@ -74,7 +77,7 @@ partnerRouter.route('/:partnerId')
     .catch(err => next(err))
 
 })
-.delete(authenticate.verifyUser, authenticate.verifyAdmin,(req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,(req, res, next) => {
     //Delete a specific partner : by Id
     Partner.findByIdAndDelete(req.params.partnerId)
     .then(response => {
