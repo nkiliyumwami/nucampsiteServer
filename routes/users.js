@@ -10,7 +10,7 @@ const User = require('../models/user');
 
 /* GET users listing. */
 router.get('/', cors.corsWithOptions, authenticate.verifyUser,  authenticate.verifyAdmin, (req, res, next) => {
-  // res.send('respond with a resource');
+  // Get a list of all users
   User.find()
   .then(users => {
     res.statusCode = 200;
@@ -86,6 +86,16 @@ router.get('/logout', cors.corsWithOptions, (req, res, next) => {
   }
 });
 
+//Route for facebook 
+router.get('/facebook/token', passport.authenticate('facebook-token'), (req, res) => {
+  //Check if there is a valid user : then create a jsonwebtoken
+  if(req.user) {
+    const token = authenticate.getToken({_id: req.user._id});
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json({success: true, token: token, status: `You are successfully logged in with facebook`});
+  }
+})
 
 //Export the module
 module.exports = router;
